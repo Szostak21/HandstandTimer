@@ -4,8 +4,15 @@
 *.log
 *.pyc
 *.swp
+.DS_Store
 .buildlog/
 .history
+
+# IDE & project files
+.idea/
+.vscode/
+*.iml
+.metadata
 
 
 
