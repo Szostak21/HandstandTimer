@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:camera/camera.dart';
+import '../state/timer_controller.dart';
 
 class TimerScreen extends ConsumerWidget {
   const TimerScreen({super.key});
@@ -9,6 +11,7 @@ class TimerScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    final cameraState = ref.watch(cameraControllerProvider);
     return SafeArea(
       child: Center(
         child: Padding(
@@ -27,29 +30,24 @@ class TimerScreen extends ConsumerWidget {
                     width: 2,
                   ),
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.videocam_outlined,
-                      size: 56,
-                      color: colorScheme.primary.withAlpha(120),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Camera Preview',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        color: colorScheme.onSurface.withAlpha(130),
+                child: cameraState.when(
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                  error: (error, stack) => Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        'Błąd kamery:\n$error',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: colorScheme.error),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Will appear here',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurface.withAlpha(80),
-                      ),
-                    ),
-                  ],
+                  ),
+                  data: (controller) => ClipRRect(
+                    borderRadius: BorderRadius.circular(22), 
+                    child: CameraPreview(controller),
+                  ),
                 ),
               ),
               const SizedBox(height: 48),
@@ -84,7 +82,7 @@ class TimerScreen extends ConsumerWidget {
                       width: 10,
                       height: 10,
                       decoration: BoxDecoration(
-                        color: colorScheme.onSurface.withAlpha(80),
+                        color: cameraState.hasValue ? Colors.green : colorScheme.onSurface.withAlpha(80),
                         shape: BoxShape.circle,
                       ),
                     ),
