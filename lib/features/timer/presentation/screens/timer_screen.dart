@@ -6,12 +6,23 @@ import '../state/timer_controller.dart';
 class TimerScreen extends ConsumerWidget {
   const TimerScreen({super.key});
 
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    String minutes = twoDigits(duration.inMinutes.remainder(60));
+    String seconds = twoDigits(duration.inSeconds.remainder(60));
+    String deciseconds = (duration.inMilliseconds.remainder(1000) ~/ 100).toString();
+    return "$minutes:$seconds.$deciseconds";
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     final cameraState = ref.watch(cameraControllerProvider);
+    
+    final timerState = ref.watch(timerProvider);
+
     return SafeArea(
       child: Center(
         child: Padding(
@@ -26,24 +37,15 @@ class TimerScreen extends ConsumerWidget {
                   color: colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: colorScheme.primary.withAlpha(60),
-                    width: 2,
+                    color: timerState.isHandstanding 
+                        ? Colors.green 
+                        : colorScheme.primary.withAlpha(60),
+                    width: timerState.isHandstanding ? 4 : 2, 
                   ),
                 ),
                 child: cameraState.when(
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                  error: (error, stack) => Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        'Błąd kamery:\n$error',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: colorScheme.error),
-                      ),
-                    ),
-                  ),
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (error, stack) => Center(child: Text('Błąd:\n$error')),
                   data: (controller) => ClipRRect(
                     borderRadius: BorderRadius.circular(22), 
                     child: CameraPreview(controller),
@@ -51,51 +53,28 @@ class TimerScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 48),
+              
               Text(
-                '00:00.0',
+                _formatDuration(timerState.duration),
                 style: theme.textTheme.displayLarge?.copyWith(
                   fontWeight: FontWeight.w300,
-                  color: colorScheme.primary,
+                  color: timerState.isHandstanding ? Colors.green : colorScheme.primary,
                   letterSpacing: 4,
                   fontFeatures: [const FontFeature.tabularFigures()],
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Get into a handstand to start',
+                timerState.isHandstanding 
+                    ? 'Great form! Hold it!' 
+                    : 'Get into a handstand to start',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurface.withAlpha(120),
+                  color: timerState.isHandstanding 
+                      ? Colors.green 
+                      : colorScheme.onSurface.withAlpha(120),
                 ),
               ),
               const SizedBox(height: 40),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(100),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: cameraState.hasValue ? Colors.green : colorScheme.onSurface.withAlpha(80),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      'Waiting for camera',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: colorScheme.onSurface.withAlpha(150),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
         ),
